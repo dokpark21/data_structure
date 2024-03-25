@@ -10,9 +10,7 @@ typedef struct
     int expon;
 } polynomial;
 
-polynomial terms[MAX_TERMS];
-
-void multiplyPolynomials(int startA, int finishA, int startB, int finishB, int *startD, int *finishD)
+void multiplyPolynomials(int startA, int finishA, int startB, int finishB, int *startD, int *finishD, polynomial terms[MAX_TERMS])
 {
     clock_t start_time = clock(); // 작업 시작 시간 측정
 
@@ -52,8 +50,24 @@ void multiplyPolynomials(int startA, int finishA, int startB, int finishB, int *
     printf("작업 소요 시간: %f 초\n", elapsed_time);                        // 작업 시간 출력
 }
 
+void printPolynomial(int start, int finish, polynomial terms[MAX_TERMS])
+{
+    for (int i = start; i <= finish; i++)
+    {
+        if (terms[i].coef == 0)
+            continue;
+        printf("%.2fx^%d", terms[i].coef, terms[i].expon);
+        if (i != finish)
+            printf(" + ");
+    }
+    printf("\n");
+}
+
 int main()
 {
+    polynomial terms[MAX_TERMS] = {0};
+    polynomial terms2[MAX_TERMS] = {0};
+
     int startA, finishA, startB, finishB, startD, finishD;
     // 다항식 : A: 1.0x^2 + 2.0x^1 + 4.0x^0, B: 3.0x^3 + 4.0x^2 + 5.0x^1 + 3.0x^0
     terms[0].coef = 1.0;
@@ -75,17 +89,39 @@ int main()
     startB = 3;
     finishB = 6;
 
-    multiplyPolynomials(startA, finishA, startB, finishB, &startD, &finishD);
+    int startA2, finishA2, startB2, finishB2, startD2, finishD2;
+    // 다항식 : A: 1.0x^5 + 2.0x^4 + 3.0x^3 + 4.0x^2 + 5.0x^1 + 6.0x^0, B: 1.0x^4 + 2.0x^3 + 3.0x^2 + 4.0x^1 + 5.0x^0
+    terms2[0].coef = 1.0;
+    terms2[0].expon = 5;
+    terms2[1].coef = 2.0;
+    terms2[1].expon = 4;
+    terms2[2].coef = 3.0;
+    terms2[2].expon = 3;
+    terms2[3].coef = 4.0;
+    terms2[3].expon = 2;
+    terms2[4].coef = 5.0;
+    terms2[4].expon = 1;
+    terms2[5].coef = 6.0;
+    terms2[5].expon = 0;
+    terms2[6].coef = 1.0;
+    terms2[6].expon = 4;
+    terms2[7].coef = 2.0;
+    terms2[7].expon = 3;
+    terms2[8].coef = 3.0;
+    terms2[8].expon = 2;
+    terms2[9].coef = 4.0;
+    terms2[9].expon = 1;
+    terms2[10].coef = 5.0;
+    terms2[10].expon = 0;
+    startA2 = 0;
+    finishA2 = 5;
+    startB2 = 6;
+    finishB2 = 10;
 
-    printf("Result : ");
-    for (int i = startD; i <= finishD; i++)
-    {
-        if (terms[i].coef == 0)
-            continue;
-        printf("%.2fx^%d", terms[i].coef, terms[i].expon);
-        if (i != finishD)
-            printf(" + ");
-    }
-    printf("\n");
+    multiplyPolynomials(startA, finishA, startB, finishB, &startD, &finishD, terms);
+    multiplyPolynomials(startA2, finishA2, startB2, finishB2, &startD2, &finishD2, terms2);
+
+    printPolynomial(startD, finishD, terms);
+    printPolynomial(startD2, finishD2, terms2);
     return 0;
 }

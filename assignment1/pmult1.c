@@ -43,26 +43,35 @@ polynomial multiplyPolynomials(polynomial poly1, polynomial poly2)
     return result;
 }
 
+void printPolynomial(polynomial poly)
+{
+    for (int i = 0; i <= poly.degree; i++)
+    {
+        if (poly.coef[i] == 0)
+            continue;
+        printf("%.2fx^%d ", poly.coef[i], poly.degree - i);
+        if (i != poly.degree)
+            printf("+ ");
+    }
+    printf("\n");
+}
+
 int main()
 {
     // 다항식 초기화
     polynomial poly1 = {2, {1.0, 2.0, 4.0}};
     polynomial poly2 = {3, {3.0, 4.0, 5.0, 3.0}};
 
+    polynomial poly3 = {5, {1.0, 2.0, 3.0, 4.0, 5.0, 6.0}};
+    polynomial poly4 = {4, {1.0, 2.0, 3.0, 4.0, 5.0}};
+
     // 다항식 곱셈 수행
     polynomial result = multiplyPolynomials(poly1, poly2);
+    polynomial result2 = multiplyPolynomials(poly3, poly4);
 
     // 결과 출력
-    printf("Result : ");
-    for (int i = 0; i <= result.degree; i++)
-    {
-        if (result.coef[i] == 0)
-            continue;
-        printf("%.2fx^%d ", result.coef[i], result.degree - i);
-        if (i != result.degree)
-            printf("+ ");
-    }
-    printf("\n");
+    printPolynomial(result);
+    printPolynomial(result2);
 
     return 0;
 }
