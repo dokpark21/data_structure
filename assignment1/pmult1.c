@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #define MAX_DEGREE 101
 
@@ -15,6 +16,8 @@ typedef struct
 // 두 다항식을 곱하는 함수
 polynomial multiplyPolynomials(polynomial poly1, polynomial poly2)
 {
+    clock_t start_time = clock(); // 작업 시작 시간 측정
+
     polynomial result;
     int i, j;
 
@@ -34,6 +37,9 @@ polynomial multiplyPolynomials(polynomial poly1, polynomial poly2)
         }
     }
 
+    clock_t end_time = clock();                                             // 작업 종료 시간 측정
+    double elapsed_time = (double)(end_time - start_time) / CLOCKS_PER_SEC; // 작업 시간 계산
+    printf("작업 소요 시간: %f 초\n", elapsed_time);
     return result;
 }
 

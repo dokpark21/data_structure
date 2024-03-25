@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #define MAX_TERMS 100
 
@@ -13,6 +14,8 @@ polynomial terms[MAX_TERMS];
 
 void multiplyPolynomials(int startA, int finishA, int startB, int finishB, int *startD, int *finishD)
 {
+    clock_t start_time = clock(); // 작업 시작 시간 측정
+
     int avail = finishB + 1;
     *startD = finishB + 1;
 
@@ -43,6 +46,10 @@ void multiplyPolynomials(int startA, int finishA, int startB, int finishB, int *
     }
 
     *finishD = avail;
+
+    clock_t end_time = clock();                                             // 작업 종료 시간 측정
+    double elapsed_time = (double)(end_time - start_time) / CLOCKS_PER_SEC; // 작업 시간 계산
+    printf("작업 소요 시간: %f 초\n", elapsed_time);                        // 작업 시간 출력
 }
 
 int main()
