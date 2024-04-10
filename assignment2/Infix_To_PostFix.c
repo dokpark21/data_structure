@@ -284,13 +284,31 @@ int main()
     infix[strcspn(infix, "\n")] = 0; // fgets로 인한 개행 문자 제거
 
     tokenizeExpression(infix, tokenized);
-    printf("Tokenized expression: %s\n", tokenized);
+    printf("Tokenized expression: ");
+    for (int i = 0; i < strlen(tokenized); i++)
+    {
+        if (tokenized[i] == 'p')
+            printf("+");
+        else if (tokenized[i] == 'm')
+            printf("-");
+        else
+            printf("%c", tokenized[i]);
+    }
 
     postfix_new(tokenized, postfix);
-    printf("Postfix expression: %s\n", postfix);
+    printf("\nPostfix expression: ");
+    for (int i = 0; i < strlen(postfix); i++)
+    {
+        if (postfix[i] == 'p')
+            printf("+");
+        else if (postfix[i] == 'm')
+            printf("-");
+        else
+            printf("%c", postfix[i]);
+    }
 
     result = eval(postfix);
-    printf("Result: %d\n", result);
+    printf("\nResult: %d\n", result);
 
     return 0;
 }
