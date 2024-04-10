@@ -42,8 +42,8 @@ int is_empty(Stack *s)
 
 int precedence(char *op)
 {
-    if (strcmp(op, "+") == 0 && strlen(op) == 1 || strcmp(op, "-") == 0 && strlen(op) == 1)
-        return 14;
+    if (strcmp(op, "p") == 0 || strcmp(op, "m") == 0)
+        return 15;
     if (strcmp(op, "/") == 0)
         return 13;
     if (strcmp(op, "%") == 0)
@@ -78,21 +78,21 @@ int precedence(char *op)
     return -1; // not a valid operator
 }
 
-void postfix_new(char *infix)
+void postfix_new(char *infix, char *postfix)
 {
     Stack s;
     s.top = -1;
-    char output[MAX_SIZE][MAX_SIZE]; // 후위 표현식을 저장할 배열
-    int j = 0, k = 0;
+    int j = 0;
 
-    char token[MAX_SIZE];
-    char *pt = strtok(infix, " "); // 공백으로 토큰화
+    char temp[MAX_SIZE];
+    char *pt = strtok(infix, " ");
 
     while (pt != NULL)
     {
-        if (isalnum(pt[0]))
-        { // 피연산자인 경우
-            strcpy(output[j++], pt);
+        if (isdigit(pt[0]))
+        {
+            strcat(postfix, pt);
+            strcat(postfix, " ");
         }
         else if (strcmp(pt, "(") == 0)
         {
@@ -102,15 +102,19 @@ void postfix_new(char *infix)
         {
             while (strcmp(s.items[s.top], "(") != 0)
             {
-                strcpy(output[j++], pop(&s));
+                strcpy(temp, pop(&s));
+                strcat(postfix, temp);
+                strcat(postfix, " ");
             }
             pop(&s); // '(' 제거
         }
         else
-        { // 연산자인 경우
+        {
             while (!is_empty(&s) && precedence(pt) <= precedence(s.items[s.top]))
             {
-                strcpy(output[j++], pop(&s));
+                strcpy(temp, pop(&s));
+                strcat(postfix, temp);
+                strcat(postfix, " ");
             }
             push(&s, pt);
         }
@@ -119,12 +123,9 @@ void postfix_new(char *infix)
 
     while (!is_empty(&s))
     {
-        strcpy(output[j++], pop(&s));
-    }
-
-    for (k = 0; k < j; k++)
-    {
-        printf("%s ", output[k]);
+        strcpy(temp, pop(&s));
+        strcat(postfix, temp);
+        strcat(postfix, " ");
     }
 }
 
@@ -136,7 +137,23 @@ void tokenizeExpression(char *expr, char *tokenized)
 
     while (i < len)
     {
-        if (expr[i] == '+' || expr == '-' || expr[i] == '*' || expr[i] == '/' || expr[i] == '%')
+        if (expr[i] == '+' && i == 0 || expr[i] == '+' && !isalnum(expr[i - 1]) && !isalnum(expr[i + 1]))
+        {
+            tokenized[j++] = 'p';
+            tokenized[j++] = ' ';
+            i++;
+            continue;
+        }
+
+        if (expr[i] == '-' && i == 0 || expr[i] == '-' && !isalnum(expr[i - 1]) && !isalnum(expr[i + 1]))
+        {
+            tokenized[j++] = 'm';
+            tokenized[j++] = ' ';
+            i++;
+            continue;
+        }
+
+        if (expr[i] == '+' || expr[i] == '-' || expr[i] == '*' || expr[i] == '/' || expr[i] == '%')
         {
             if (j > 0 && tokenized[j - 1] != ' ')
                 tokenized[j++] = ' ';
@@ -180,19 +197,100 @@ void tokenizeExpression(char *expr, char *tokenized)
     tokenized[j] = '\0'; // NULL 문자로 문자열 종료
 }
 
+int eval(char *postfix)
+{
+    Stack s;
+    s.top = -1;
+    char *token;
+    char numStr[10];
+    int op1, op2;
+    int result;
+
+    // strtok를 사용하여 토큰화
+    token = strtok(postfix, " ");
+    while (token != NULL)
+    {
+        if (isdigit(token[0]))
+        {
+            // 숫자인 경우 스택에 push
+            push(&s, token);
+        }
+        else
+        {
+            if (strcmp(token, "p") == 0 || strcmp(token, "m") == 0)
+            {
+                op1 = atoi(pop(&s));
+            }
+            else
+            {
+                // 연산자인 경우 두 개의 숫자를 스택에서 pop하여 계산
+                op2 = atoi(pop(&s)); // 먼저 pop한 것이 op2
+                op1 = atoi(pop(&s)); // 그 다음 pop한 것이 op1
+            }
+            switch (token[0])
+            { // 연산자를 처리
+            case 'p':
+                snprintf(numStr, 10, "%d", op1);
+                break;
+            case 'm':
+                snprintf(numStr, 10, "%d", -op1);
+                break;
+            case '+':
+                snprintf(numStr, 10, "%d", op1 + op2);
+                break;
+            case '-':
+                snprintf(numStr, 10, "%d", op1 - op2);
+                break;
+            case '*':
+                snprintf(numStr, 10, "%d", op1 * op2);
+                break;
+            case '/':
+                if (op2 == 0)
+                {
+                    fprintf(stderr, "Division by zero error.\n");
+                    exit(EXIT_FAILURE);
+                }
+                snprintf(numStr, 10, "%d", op1 / op2);
+                break;
+            case '%':
+                if (op2 == 0)
+                {
+                    fprintf(stderr, "Division by zero error.\n");
+                    exit(EXIT_FAILURE);
+                }
+                snprintf(numStr, 10, "%d", op1 % op2);
+                break;
+            default:
+                fprintf(stderr, "Invalid operator: %s\n", token);
+                exit(EXIT_FAILURE);
+            }
+            push(&s, numStr); // 계산 결과를 스택에 push
+        }
+        token = strtok(NULL, " "); // 다음 토큰을 가져옴
+    }
+    result = atoi(pop(&s));
+    return result; // 마지막 결과 반환
+}
+
 int main()
 {
-    char infix[MAX_SIZE];
-    char tokenized[MAX_SIZE];
+    char infix[MAX_SIZE] = {0};
+    char tokenized[MAX_SIZE * 2] = {0}; // 공백 추가를 위해 크기를 늘림
+    char postfix[MAX_SIZE * 2] = {0};   // 후위 표현식 저장을 위해 충분한 크기 할당
+    int result;
 
     printf("Enter an infix expression: ");
-    gets(infix);
+    fgets(infix, MAX_SIZE, stdin);
+    infix[strcspn(infix, "\n")] = 0; // fgets로 인한 개행 문자 제거
 
     tokenizeExpression(infix, tokenized);
     printf("Tokenized expression: %s\n", tokenized);
 
-    printf("Postfix expression: ");
-    postfix_new(tokenized);
+    postfix_new(tokenized, postfix);
+    printf("Postfix expression: %s\n", postfix);
+
+    result = eval(postfix);
+    printf("Result: %d\n", result);
 
     return 0;
 }
