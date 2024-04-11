@@ -268,6 +268,19 @@ int eval(char *postfix)
         }
         token = strtok(NULL, " "); // 다음 토큰을 가져옴
     }
+    // 단항 연산자가 많아서 스택에 마지막에 2개 이상의 숫자가 남은경우
+    if (s.top >= 1)
+    {
+        while (s.top > 0)
+        {
+            op1 = atoi(pop(&s));
+            op2 = atoi(pop(&s));
+            sprintf(numStr, "%d", op1 + op2);
+            push(&s, numStr);
+        }
+        result = atoi(pop(&s));
+        return result;
+    }
     result = atoi(pop(&s));
     return result; // 마지막 결과 반환
 }
