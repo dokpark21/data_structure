@@ -49,7 +49,6 @@ Graph *createGraph()
     return graph;
 }
 
-// 새로운 노드를 헤드 위치 생성하고 헤드를 뒤로 미는 이유: 이런식으로 생성하게 된다면 노드를 추가할 때 시간은 O(1)이 된다. 탐색 시간이 길어지지만 노드를 추가할 일이 더 많다.
 void addEdge(Graph *graph, int src, int dest, int cost)
 {
     Node *newNode = createNode(dest, cost);
@@ -68,10 +67,10 @@ MinHeapNode *newMinHeapNode(int v, int dist)
 MinHeap *createMinHeap(int capacity)
 {
     MinHeap *minHeap = (MinHeap *)malloc(sizeof(MinHeap));
-    minHeap->pos = (int *)malloc(capacity * sizeof(int));
+    minHeap->pos = (int *)malloc((capacity + 1) * sizeof(int));
     minHeap->size = 0;
     minHeap->capacity = capacity;
-    minHeap->array = (MinHeapNode **)malloc(capacity * sizeof(MinHeapNode *));
+    minHeap->array = (MinHeapNode **)malloc((capacity + 1) * sizeof(MinHeapNode *));
     return minHeap;
 }
 
@@ -86,8 +85,8 @@ void minHeapify(MinHeap *minHeap, int idx)
 {
     int smallest, left, right;
     smallest = idx;
-    left = 2 * idx + 1;
-    right = 2 * idx + 2;
+    left = 2 * idx;
+    right = 2 * idx + 1;
 
     if (left < minHeap->size && minHeap->array[left]->dist < minHeap->array[smallest]->dist)
         smallest = left;
@@ -119,16 +118,15 @@ MinHeapNode *extractMin(MinHeap *minHeap)
     if (isEmpty(minHeap))
         return NULL;
 
-    MinHeapNode *root = minHeap->array[0];
+    MinHeapNode *root = minHeap->array[1];
+    MinHeapNode *lastNode = minHeap->array[minHeap->size];
+    minHeap->array[1] = lastNode;
 
-    MinHeapNode *lastNode = minHeap->array[minHeap->size - 1];
-    minHeap->array[0] = lastNode;
-
-    minHeap->pos[root->v] = minHeap->size - 1;
-    minHeap->pos[lastNode->v] = 0;
+    minHeap->pos[root->v] = minHeap->size;
+    minHeap->pos[lastNode->v] = 1;
 
     --minHeap->size;
-    minHeapify(minHeap, 0);
+    minHeapify(minHeap, 1);
 
     return root;
 }
@@ -138,18 +136,18 @@ void decreaseKey(MinHeap *minHeap, int v, int dist)
     int i = minHeap->pos[v];
     minHeap->array[i]->dist = dist;
 
-    while (i && minHeap->array[i]->dist < minHeap->array[(i - 1) / 2]->dist)
+    while (i > 1 && minHeap->array[i]->dist < minHeap->array[i / 2]->dist)
     {
-        minHeap->pos[minHeap->array[i]->v] = (i - 1) / 2;
-        minHeap->pos[minHeap->array[(i - 1) / 2]->v] = i;
-        swapMinHeapNode(&minHeap->array[i], &minHeap->array[(i - 1) / 2]);
-        i = (i - 1) / 2;
+        minHeap->pos[minHeap->array[i]->v] = i / 2;
+        minHeap->pos[minHeap->array[i / 2]->v] = i;
+        swapMinHeapNode(&minHeap->array[i], &minHeap->array[i / 2]);
+        i = i / 2;
     }
 }
 
 int isInMinHeap(MinHeap *minHeap, int v)
 {
-    if (minHeap->pos[v] < minHeap->size)
+    if (minHeap->pos[v] <= minHeap->size)
         return 1;
     return 0;
 }
@@ -159,17 +157,22 @@ void printArr(int dist[], int n, int prev[])
     printf("Vertex Distance from Source\n");
     for (int i = 1; i <= n; ++i)
     {
-        printf("%d \t\t %d\n", i, dist[i]);
+        printf("Path(2->%d): ", i);
         if (dist[i] != INT_MAX)
         {
-            printf("Path: ");
             int j = i;
             while (prev[j] != -1)
             {
                 printf("%d <- ", j);
                 j = prev[j];
             }
-            printf("2\n");
+            printf("2");
+
+            printf(" Distance: %d\n", dist[i]);
+        }
+        else
+        {
+            printf("No path\n");
         }
     }
 }
@@ -179,7 +182,7 @@ void dijkstra(Graph *graph, int src)
     int dist[NUM_BUILDINGS + 1];
     int prev[NUM_BUILDINGS + 1];
 
-    MinHeap *minHeap = createMinHeap(NUM_BUILDINGS);
+    MinHeap *minHeap = createMinHeap(NUM_BUILDINGS + 1);
 
     for (int v = 1; v <= NUM_BUILDINGS; ++v)
     {
@@ -189,9 +192,8 @@ void dijkstra(Graph *graph, int src)
         minHeap->pos[v] = v;
     }
 
-    minHeap->array[src] = newMinHeapNode(src, dist[src]);
-    minHeap->pos[src] = src;
     dist[src] = 0;
+    minHeap->array[src]->dist = 0;
     decreaseKey(minHeap, src, dist[src]);
 
     minHeap->size = NUM_BUILDINGS;
@@ -200,6 +202,7 @@ void dijkstra(Graph *graph, int src)
     {
         MinHeapNode *minHeapNode = extractMin(minHeap);
         int u = minHeapNode->v;
+        free(minHeapNode); // extractMin에서 반환된 노드는 해제해야 함
 
         Node *pCrawl = graph->head[u];
         while (pCrawl != NULL)
@@ -217,6 +220,7 @@ void dijkstra(Graph *graph, int src)
     }
 
     printArr(dist, NUM_BUILDINGS, prev);
+    free(minHeap);
 }
 
 void generate_random_edges(Graph *graph, int num_edges)
